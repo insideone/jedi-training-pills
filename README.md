@@ -26,6 +26,7 @@ The script will place "Report" button under the header of the page. It takes abo
 * Store - link to the Steam Store for game from the last cart
 * Ending - when does the giveaway end?
 * Winners - list of winners (well, there must be only one winner for a train, but someone might have made a mistake)
+* No entries - GAs from unread posts (plus the last) that got no entries
 * Problems - if the script can't fetch some data it will show the reason here
 
 ### "By User" report
@@ -63,8 +64,14 @@ While `npm start` is running you can change any `./src` files (except `headers.j
 
 Then after each update you should reload page __two times__.
 
-## Make a new build
+### Make a new build
 
 ```bash
 npm run build
+```
+
+### Make sure the tests are fine
+
+```bash
+npm t
 ```

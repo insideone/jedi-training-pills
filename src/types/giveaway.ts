@@ -5,10 +5,11 @@ import GiveawayWinnerEntry from "./giveawayWinnerEntry";
 type Giveaway = {
     url: string,
     creator?: User | null,
-    startedAt?: Date,
-    endingAt?: Date,
+    startedAt?: Date | null,
+    endingAt?: Date | null,
     app?: App,
-    winners: GiveawayWinnerEntry[],
+    winners?: GiveawayWinnerEntry[],
+    problems: string[],
 };
 
 export default Giveaway;

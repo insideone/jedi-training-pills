@@ -8,8 +8,7 @@ import SteamTh from "./steam/steamTh";
 import SteamTd from "./steam/steamTd";
 import sgUrl from "../functions/sgUrl";
 import access from "../functions/access";
-import singleDestructAccess from "../functions/singleDestructAccess";
-import GiveawayWinnerEntry from "../types/giveawayWinnerEntry";
+import accessTo from "../functions/accessTo";
 import User from "../types/user";
 
 type TrainsProps = {
@@ -28,6 +27,7 @@ const TrainsReport = (props: TrainsProps) => {
                 <SteamTh>Store</SteamTh>
                 <SteamTh>Ending</SteamTh>
                 <SteamTh>Winners</SteamTh>
+                <SteamTh>No Entries</SteamTh>
                 <SteamTh>Problems</SteamTh>
             </SteamTr>
             {trains.map(train => {
@@ -41,10 +41,10 @@ const TrainsReport = (props: TrainsProps) => {
 
                 return (
                     <SteamTr>
-                        <SteamTd><a href={train.url} target="_blank">{train.name}</a></SteamTd>
+                        <SteamTd><a href={String(train.url)} target="_blank">{train.name}</a></SteamTd>
                         <SteamTd>{user ? (<a href={user.url} target="_blank">{user.name}</a>) : []}</SteamTd>
                         <SteamTd>{
-                            singleDestructAccess(() => train.head!.post)(post => (
+                            accessTo(() => train.head!.post)(post => (
                                 post ? (friendlyTime(
                                     train.head!.post.updatedAt
                                         ? train!.head!.post.updatedAt
@@ -53,7 +53,7 @@ const TrainsReport = (props: TrainsProps) => {
                             ))
                         }</SteamTd>
                         <SteamTd>
-                            {singleDestructAccess(() => ({
+                            {accessTo(() => ({
                                 name: train.head!.giveaway.app!.name,
                                 url: train.head!.giveaway.url,
                             }))(giveaway => (
@@ -63,7 +63,7 @@ const TrainsReport = (props: TrainsProps) => {
                             ))}
                         </SteamTd>
                         <SteamTd>
-                            {singleDestructAccess(() => train.head!.giveaway!.app!.url)(url => (
+                            {accessTo(() => train.head!.giveaway!.app!.url)(url => (
                                 url ? (
                                     <a href={url} target="_blank">
                                         <img src='https://steamstore-a.akamaihd.net/public/shared/images/userreviews/icon_review_steam.png' alt="" />
@@ -72,18 +72,29 @@ const TrainsReport = (props: TrainsProps) => {
                             ))}
                         </SteamTd>
                         <SteamTd>
-                            {singleDestructAccess(() => train.head!.giveaway!.endingAt)(endingAt => (
+                            {accessTo(() => train.head!.giveaway!.endingAt)(endingAt => (
                                 endingAt ? friendlyTime(endingAt) : []
                             ))}
                         </SteamTd>
                         <SteamTd>
-                            {singleDestructAccess(() => train.head!.giveaway!.winners, [])((winners: GiveawayWinnerEntry[]) => winners.map(winner => (
+                            {accessTo(() => train.head!.giveaway!.winners)(winners => (winners || []).map(winner => (
                                 winner.status === 'Received' ? (
                                     <a href={sgUrl(winner.user!.url)} target="_blank">{winner.user!.name}</a>
                                 ) : (
                                     <span>Anonymous</span>
                                 )
                             )))}
+                        </SteamTd>
+                        <SteamTd>
+                            {accessTo(() => train.newNoEntriesGiveaways)(newNoEntriesGiveaways => (
+                                (newNoEntriesGiveaways || []).map(noEntriesGa => (
+                                    <div>
+                                        <a href={noEntriesGa.url}>{
+                                            accessTo(() => noEntriesGa.app!.name, 'Unknown')(appName => appName)
+                                        }</a>
+                                    </div>
+                                ))
+                            ))}
                         </SteamTd>
                         <SteamTd>{train.problems.map(problem => (<p>{problem}</p>))}</SteamTd>
                     </SteamTr>

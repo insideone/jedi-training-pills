@@ -1,16 +1,20 @@
 /** @jsx H */
 import {H} from 'dot-dom';
-//import Trains from "./trains";
-import $ from "../functions/buildDocument";
 import Button from "./button";
 import Train from "../types/train";
 import fetchTrain from "../functions/fetchTrain";
 import TrainsReport from "./trainsReport";
 import UsersReport from "./usersReport";
 import getErrorMessage from "../functions/getErrorMessage";
+import TrainsAnnoncementPageParser from "../parsers/trainsAnnoncementPageParser";
+import TrainsFilter from "../filters/trainsFilter";
+import DiscussionNotification from "../types/discussionNotification";
+import SteamNotificationsPageFetcher from "../fetchers/steamNotificationsPageFetcher";
+import $ from "../functions/buildDocument";
 
 type ApplicationState = {
     trains: Train[],
+    notifications: DiscussionNotification[],
     trainsCount: number,
     errors: string[],
     loading: boolean,
@@ -29,31 +33,20 @@ const skippedTrainsRegex = /Monthly Train/;
 const Application = (props: object, state: ApplicationState, setState: (state: Partial<ApplicationState>) => void) => {
     const {
         trains = [],
+        notifications = [],
         errors = [],
         trainsCount = 0,
         loading = false,
     } = state;
 
     const loadTrains = () => {
-        let trainsStash: Train[] = [];
+        let trainsStash: Train[] = (new TrainsAnnoncementPageParser(document.body)).parse().trains;
 
-        Array.from(document.querySelectorAll('.bodytext a')).map(trainLink => {
-            try {
-                trainsStash.push({
-                    url: trainLink.getAttribute('href') || '',
-                    name: $.previous(trainLink, node => node.nodeType === Node.TEXT_NODE).textContent,
-                    problems: [] as string[],
-                } as Train)
-            } catch (e) {
-                // skip
-            }
-        });
-
-        trainsStash = trainsStash.filter(train => (
-            train.url && train.name
-                && !skippedTrains.includes(train.name)
-                && !train.name.match(skippedTrainsRegex)
-        ));
+        trainsStash = (new TrainsFilter(trainsStash))
+            .addNameExcludes(skippedTrains)
+            .addNameRegexExcludes([skippedTrainsRegex])
+            .filter()
+        ;
 
         // for a debug purpose
         // trainsStash = trainsStash.filter(train => (
@@ -64,6 +57,8 @@ const Application = (props: object, state: ApplicationState, setState: (state: P
         //    ].includes(train.name)
         // ));
 
+        const allowedTrainNames = trainsStash.map(train => train.name);
+
         while (trains.length) { trains.pop() }
         while (errors.length) { errors.pop() }
 
@@ -71,27 +66,55 @@ const Application = (props: object, state: ApplicationState, setState: (state: P
             loading: true,
             trainsCount: trainsStash.length,
             trains,
+            notifications,
             errors,
         });
 
-        (new Promise<Train[]>(resolve => {
-            (function next(restTrains) {
-                if (restTrains.length === 0) {
-                    resolve(trains);
-                    return;
-                }
+        const activeNotificationNode = $.maybeOne(document.body, 'a.active_inbox_item[href$="/commentnotifications/"]');
 
-                const train = restTrains.shift() as Train;
+        Promise.all([
+            activeNotificationNode ? (
+                (new SteamNotificationsPageFetcher(activeNotificationNode.getAttribute('href') as string))
+                    .fetch()
+                    .then(notificationPage => {
+                        const alreadySavedNotifications = notifications.map(notification => notification.name);
+                        const beforeCnt = alreadySavedNotifications.length;
 
-                fetchTrain(train).then(() => {}).catch(error => {
-                    train.problems.push(getErrorMessage(error));
-                }).finally(() => {
-                    trains.push(train);
-                    setState({ trains });
-                    next(restTrains);
-                });
-            })(trainsStash);
-        })).finally(() => {
+                        const newNotifications = notificationPage.notifications
+                            .filter(notification => (
+                                notification.url.indexOf('?tscn=') !== undefined
+                                    && allowedTrainNames.includes(notification.name)
+                                    && notification.unread
+                                    && !alreadySavedNotifications.includes(notification.name)
+                            ));
+
+                        notifications.push(...newNotifications);
+
+                        if (beforeCnt !== notifications.length) {
+                            setState({ notifications });
+                        }
+                    })
+            ) : Promise.resolve(),
+            (new Promise<void>(resolve => {
+                (function next(restTrains) {
+                    if (restTrains.length === 0) {
+                        resolve();
+                        return;
+                    }
+
+                    const train = restTrains.shift() as Train;
+
+                    fetchTrain(train).then(() => {}).catch(error => {
+                        console.log({ error });
+                        train.problems.push(getErrorMessage(error));
+                    }).finally(() => {
+                        trains.push(train);
+                        setState({ trains });
+                        next(restTrains);
+                    });
+                })(trainsStash);
+            }))
+        ]).finally(() => {
             setState({ loading: false })
         })
     };
@@ -116,6 +139,16 @@ const Application = (props: object, state: ApplicationState, setState: (state: P
                     <h2>By User</h2>
                     <UsersReport trains={trains}/>
                     <hr />
+                </div>
+            ) : []}
+            {notifications.length > 0 ? (
+                <div>
+                    <h2>Unread Backup</h2>
+                    <ul>
+                        {notifications.map(notification => (
+                            <li><a href={notification.url}>{notification.name}</a></li>
+                        ))}
+                    </ul>
                 </div>
             ) : []}
             {errors.length > 0 ? (

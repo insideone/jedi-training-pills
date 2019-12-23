@@ -4,22 +4,31 @@
   "description": "Report builder for Jedi Training group",
   "scripts": {
     "build": "encore prod",
-    "start": "encore dev-server"
+    "start": "encore dev-server",
+    "test": "npx jest"
   },
   "author": "insideone",
   "license": "MIT",
   "devDependencies": {
+    "@babel/plugin-transform-runtime": "^7.7.6",
+    "@babel/preset-typescript": "^7.7.7",
     "@symfony/webpack-encore": "^0.28.2",
     "@types/greasemonkey": "^4.0.0",
+    "@types/jest": "^24.0.24",
     "@types/react": "^16.9.14",
+    "@types/retry": "^0.12.0",
+    "jest": "^24.9.0",
+    "ts-jest": "^24.2.0",
     "ts-loader": "^5.4.5",
     "typescript": "^3.7.2",
     "webpack-userscript": "^2.4.0"
   },
   "dependencies": {
+    "@babel/runtime": "^7.7.7",
     "dot-dom": "wavesoft/dot-dom#devel/0.4.0",
     "friendly-time": "^1.1.1",
     "limiter": "^1.1.4",
+    "retry": "^0.12.0",
     "tinydate": "^1.2.0"
   }
 }

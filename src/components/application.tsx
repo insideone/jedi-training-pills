@@ -95,7 +95,7 @@ const Application = (props: object, state: ApplicationState, setState: (state: P
                         }
                     })
             ) : Promise.resolve(),
-            (new Promise<void>(resolve => {
+            (new Promise<void>((resolve, reject) => {
                 (function next(restTrains) {
                     if (restTrains.length === 0) {
                         resolve();
@@ -105,9 +105,17 @@ const Application = (props: object, state: ApplicationState, setState: (state: P
                     const train = restTrains.shift() as Train;
 
                     fetchTrain(train).then(() => {}).catch(error => {
+                        const errorMessage = getErrorMessage(error);
                         console.log({ error });
-                        train.problems.push(getErrorMessage(error));
+                        train.problems.push(errorMessage);
                     }).finally(() => {
+                        if (train.problems.length) {
+                            if (!confirm('There was some problems while fetching a train. Continue?')) {
+                                reject();
+                                return;
+                            }
+                        }
+
                         trains.push(train);
                         setState({ trains });
                         next(restTrains);

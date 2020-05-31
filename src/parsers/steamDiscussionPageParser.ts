@@ -5,7 +5,7 @@ import Post from "../types/post";
 
 export default class SteamDiscussionPageParser extends DomParser<SteamDiscussionPage> {
     parse(): SteamDiscussionPage {
-        const topic = $.one(this.root, '.forum_op .topic').textContent as string;
+        const topic = ($.one(this.root, '.forum_op .topic').textContent || '').trim();
         const description = $.one(this.root, '.forum_op .content').innerHTML as string;
 
         const paging = $.one(this.root, '.forum_paging_summary');
@@ -15,36 +15,33 @@ export default class SteamDiscussionPageParser extends DomParser<SteamDiscussion
         );
 
         const posts = Array.from($.all(this.root, '.commentthread_comments .commentthread_comment')).map(post => {
-            const authorLink = $.one(post, '.commentthread_author_link');
-
-            let anchor = 'unknown';
             try {
-                anchor = $.one(post, '.forum_comment_permlink a').getAttribute('href') || 'unknown';
+                const authorLink = $.one(post, '.commentthread_author_link');
+                const anchor = $.one(post, '.forum_comment_permlink a').getAttribute('href');
+                const createdAt = $.date(post, '.commentthread_comment_timestamp');
+                const updatedAt = $.maybeDate(post, '.forum_audit span[data-timestamp]');
+                const giveaways = Array.from($.all(post,'.bb_link[href*="https://www.steamgifts.com/giveaway"]')).map(giveawayUrlNode => (
+                    giveawayUrlNode.textContent
+                ));
+                const unread = post.classList.contains('commentthread_newcomment');
+                return {
+                    anchor,
+                    createdAt,
+                    updatedAt,
+                    unread,
+                    giveaways,
+                    author: {
+                        name: $.one(authorLink, 'bdi').textContent || '',
+                        url: authorLink.getAttribute('href') || '',
+                    },
+                } as Post;
             } catch (e) {
-                // ignore
+                if (!confirm(`An error occurred while parsing a post from '${topic}' topic: ${e.message}\n\n\nComplete post HTML: ${post.outerHTML}`)) {
+                    throw e;
+                }
+                return null;
             }
-
-            const createdAt = $.date(post, '.commentthread_comment_timestamp');
-            const updatedAt = $.maybeDate(post, '.forum_audit span[data-timestamp]');
-
-            const giveaways = Array.from($.all(post,'.bb_link[href*="https://www.steamgifts.com/giveaway"]')).map(giveawayUrlNode => (
-                giveawayUrlNode.textContent
-            ));
-
-            const unread = post.classList.contains('commentthread_newcomment');
-
-            return {
-                anchor,
-                createdAt,
-                updatedAt,
-                unread,
-                giveaways,
-                author: {
-                    name: $.one(authorLink, 'bdi').textContent || '',
-                    url: authorLink.getAttribute('href') || '',
-                },
-            } as Post;
-        });
+        }).filter(post => !!post) as Post[];
 
         return {
             topic,

@@ -9,6 +9,29 @@ import Application from "./components/application";
 const appContainer = document.createElement('div');
 appContainer.classList.add('jedi-training-pills');
 
+const friendsInGroup = document.querySelector('.grouppage_friendsingroup');
+if (friendsInGroup) {
+    friendsInGroup.insertAdjacentHTML(
+        'afterbegin',
+        `
+            <a
+                class="btn_darkblue_white_innerfade btn_medium"
+                href="#"
+                onclick="
+                    location.href = 'https://steamcommunity.com/groups/JediTraining/announcements/detail/1689297920480934920';
+                    return false;
+                "
+                style="
+                    position: absolute;
+                    right: 0;
+                    top: -35px;
+                "
+            >
+                <span>To Report</span>
+            </a>
+    `);
+}
+
 const postBody = $.one(document, '.announcement_body');
 (postBody.parentElement as Element).insertBefore(appContainer, postBody);
 

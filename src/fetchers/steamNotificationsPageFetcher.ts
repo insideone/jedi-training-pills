@@ -3,15 +3,20 @@ import SteamNotificationsPage from "../types/steamNotificationsPage";
 import fetchUrl from "../functions/fetchUrl";
 import $ from "../functions/buildDocument";
 import DiscussionNotification from "../types/discussionNotification";
+import Log from '../services/log'
 
 export default class SteamNotificationsPageFetcher implements FetcherInterface<SteamNotificationsPage> {
+    private log: Log;
     protected url: string;
 
-    constructor(url: string) {
+    constructor(log: Log, url: string) {
+        this.log = log;
         this.url = url;
     }
 
     fetch(): Promise<SteamNotificationsPage> {
+        this.log.addMessage(`Trying to backup unread notifications from ${this.url}`);
+
         return new Promise<SteamNotificationsPage>((resolve) => {
             fetchUrl({
                 method: 'GET',
@@ -22,6 +27,8 @@ export default class SteamNotificationsPageFetcher implements FetcherInterface<S
                     url: $.one(unreadNode, 'a[href]').getAttribute('href'),
                     unread: unreadNode.classList.contains('unread'),
                 } as DiscussionNotification));
+
+                this.log.addMessage(`Unread notification counter: ${notifications.length}`)
 
                 resolve({
                     url: this.url,

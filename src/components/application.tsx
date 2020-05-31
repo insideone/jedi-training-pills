@@ -11,6 +11,9 @@ import TrainsFilter from "../filters/trainsFilter";
 import DiscussionNotification from "../types/discussionNotification";
 import SteamNotificationsPageFetcher from "../fetchers/steamNotificationsPageFetcher";
 import $ from "../functions/buildDocument";
+import Log from "../services/log";
+
+const log = new Log;
 
 type ApplicationState = {
     trains: Train[],
@@ -40,6 +43,8 @@ const Application = (props: object, state: ApplicationState, setState: (state: P
     } = state;
 
     const loadTrains = () => {
+        log.addMessage('Start building report');
+
         let trainsStash: Train[] = (new TrainsAnnoncementPageParser(document.body)).parse().trains;
 
         trainsStash = (new TrainsFilter(trainsStash))
@@ -47,6 +52,8 @@ const Application = (props: object, state: ApplicationState, setState: (state: P
             .addNameRegexExcludes([skippedTrainsRegex])
             .filter()
         ;
+
+        log.addMessage(`${trainsStash.length} trains are found`);
 
         // for a debug purpose
         // trainsStash = trainsStash.filter(train => (
@@ -74,7 +81,7 @@ const Application = (props: object, state: ApplicationState, setState: (state: P
 
         Promise.all([
             activeNotificationNode ? (
-                (new SteamNotificationsPageFetcher(activeNotificationNode.getAttribute('href') as string))
+                (new SteamNotificationsPageFetcher(log, activeNotificationNode.getAttribute('href') as string))
                     .fetch()
                     .then(notificationPage => {
                         const alreadySavedNotifications = notifications.map(notification => notification.name);
@@ -87,6 +94,8 @@ const Application = (props: object, state: ApplicationState, setState: (state: P
                                     && notification.unread
                                     && !alreadySavedNotifications.includes(notification.name)
                             ));
+
+                        log.addMessage(`New notifications counter: ${newNotifications.length}`);
 
                         notifications.push(...newNotifications);
 
@@ -104,8 +113,11 @@ const Application = (props: object, state: ApplicationState, setState: (state: P
 
                     const train = restTrains.shift() as Train;
 
-                    fetchTrain(train).then(() => {}).catch(error => {
+                    log.addMessage(`Processing ${train.name}`);
+
+                    fetchTrain(log, train).then(() => {}).catch(error => {
                         const errorMessage = getErrorMessage(error);
+                        log.addMessage(`An error occurred: ${errorMessage}`);
                         console.log({ error });
                         train.problems.push(errorMessage);
                     }).finally(() => {
@@ -138,6 +150,17 @@ const Application = (props: object, state: ApplicationState, setState: (state: P
                     <span> ({`${trains.length}/${trainsCount}`})</span>
                 ): []}
             </Button>
+            {log.length > 0 ? (
+                <div
+                    className="announcement_control_container"
+                    style={{
+                        height: '300px',
+                        overflow: 'scroll',
+                    }}
+                >
+                    {log.getMessages().reverse().map(message => (<p>{message}</p>))}
+                </div>
+            ): []}
             <hr />
             {trains.length > 0 ? (
                 <div>

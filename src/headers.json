@@ -3,7 +3,7 @@
     "updateURL": "https://raw.githubusercontent.com/insideone/jedi-training-pills/master/dist/jedi-training-pills.meta.js",
     "downloadURL": "https://raw.githubusercontent.com/insideone/jedi-training-pills/master/dist/jedi-training-pills.user.js",
     "match": [
-        "https://steamcommunity.com/groups/JediTraining/announcements/detail/1689297920480934920"
+        "https://steamcommunity.com/groups/JediTraining*"
     ],
     "connect": [
         "www.steamgifts.com",

@@ -125,7 +125,7 @@ const Application = (props: object, state: ApplicationState, setState: (state: P
                 ? () => alert("Restarting isn't supported. Please, wait until finished or reload the page")
                 : loadTrains
             }>
-                Report
+                Report v.{process.env.VERSION}
                 {trainsCount > 0 ? (
                     <span> ({`${trains.length}/${trainsCount}`})</span>
                 ): []}

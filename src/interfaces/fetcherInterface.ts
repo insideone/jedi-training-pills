@@ -1,3 +1,3 @@
 export default interface FetcherInterface<Output> {
-    fetch(): Promise<Output>;
+    fetch(...options: any[]): Promise<Output>;
 }

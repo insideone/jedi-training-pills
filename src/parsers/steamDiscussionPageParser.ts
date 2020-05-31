@@ -17,7 +17,12 @@ export default class SteamDiscussionPageParser extends DomParser<SteamDiscussion
         const posts = Array.from($.all(this.root, '.commentthread_comments .commentthread_comment')).map(post => {
             const authorLink = $.one(post, '.commentthread_author_link');
 
-            const anchor = $.one(post, '.forum_comment_permlink a').getAttribute('href');
+            let anchor = 'unknown';
+            try {
+                anchor = $.one(post, '.forum_comment_permlink a').getAttribute('href') || 'unknown';
+            } catch (e) {
+                // ignore
+            }
 
             const createdAt = $.date(post, '.commentthread_comment_timestamp');
             const updatedAt = $.maybeDate(post, '.forum_audit span[data-timestamp]');

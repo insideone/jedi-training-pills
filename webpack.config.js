@@ -1,6 +1,7 @@
 const encore = require('@symfony/webpack-encore');
 const WebpackUserscript = require('webpack-userscript');
 const path = require('path');
+const package = require('./package');
 
 const isDevServer = encore.isDevServer();
 const isDev = encore.isDev();
@@ -24,6 +25,9 @@ encore
     .disableSingleRuntimeChunk()
     .addPlugin(userscriptPlugin)
     .enableTypeScriptLoader()
+    .configureDefinePlugin(options => {
+        options['process.env'].VERSION = JSON.stringify(package.version);
+    })
 ;
 
 const config = encore.getWebpackConfig();

@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        jedi-training-pills
-// @version     1.1.3
+// @version     1.1.4
 // @author      insideone
 // @description Report builder for Jedi Training group
 // @match       https://steamcommunity.com/groups/JediTraining/announcements/detail/1689297920480934920

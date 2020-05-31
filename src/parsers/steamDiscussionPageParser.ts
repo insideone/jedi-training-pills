@@ -15,6 +15,10 @@ export default class SteamDiscussionPageParser extends DomParser<SteamDiscussion
         );
 
         const posts = Array.from($.all(this.root, '.commentthread_comments .commentthread_comment')).map(post => {
+            if (post.classList.contains('commentthread_deleted_comment')) {
+                return null;
+            }
+
             try {
                 const authorLink = $.one(post, '.commentthread_author_link');
                 const anchor = $.one(post, '.forum_comment_permlink a').getAttribute('href');
